@@ -1,6 +1,6 @@
 import json
 
-from django.http.response import JsonResponse
+from django.http.response import JsonResponse, HttpResponse
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
@@ -8,6 +8,7 @@ from django.shortcuts import render
 
 from api.paths.drop_classify import drop_classify
 from api.paths.property_structuring import send_manuscipts
+from api.paths.rdfData import transform_data_into_rdf
 
 
 @require_http_methods(["POST"])
@@ -50,3 +51,27 @@ def send_manuscripts_view(request):
     input = json.loads(request.body)
     output, status = send_manuscipts(input)
     return JsonResponse(output, status=status)
+
+
+@require_http_methods(["POST"])
+@csrf_exempt
+@login_required
+def transform_view(request):
+    """
+    Example JSON input:
+    [
+      {
+        "data": {
+          "manuscript_ID": "ms_001",
+          "support_type": "seta antichissima",
+          "century_of_creation": "12th century",
+          ...
+        }
+      }
+    ]
+    """
+    manuscripts_data = json.loads(request.body)
+    print("manuscripts_data:", manuscripts_data)
+    rdf_output = transform_data_into_rdf(manuscripts_data)
+    print("rdf_output:", rdf_output)
+    return HttpResponse(rdf_output, content_type="text/turtle")
