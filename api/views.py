@@ -9,6 +9,7 @@ from django.shortcuts import render
 from api.paths.drop_classify import drop_classify
 from api.paths.property_structuring import send_manuscipts
 from api.paths.rdfData import transform_data_into_rdf
+from api.models import Activity
 
 
 @require_http_methods(["POST"])
@@ -17,6 +18,7 @@ from api.paths.rdfData import transform_data_into_rdf
 def drop_classify_view(request):
     input = json.loads(request.body)
     output = drop_classify(input)
+    Activity.objects.create(user=request.user, endpoint='send_manuscripts', input=input, output=output)
     return JsonResponse(output)
 
 @require_http_methods(["POST"])
@@ -52,6 +54,7 @@ def process_view(request):
 def send_manuscripts_view(request):
     input = json.loads(request.body)
     output, status = send_manuscipts(input)
+    Activity.objects.create(user=request.user, endpoint='send_manuscripts', input=input, output=output)
     return JsonResponse(output, status=status)
 
 
@@ -76,4 +79,5 @@ def transform_view(request):
     print("manuscripts_data:", input)
     output = transform_data_into_rdf(input)
     print("rdf_output:", output)
+    Activity.objects.create(user=request.user, endpoint='send_manuscripts', input=input, output=output)
     return HttpResponse(output, content_type="text/turtle")
