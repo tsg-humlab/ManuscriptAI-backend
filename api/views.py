@@ -15,7 +15,9 @@ from api.paths.rdfData import transform_data_into_rdf
 @csrf_exempt
 @login_required
 def drop_classify_view(request):
-    return JsonResponse(drop_classify(json.loads(request.body)))
+    input = json.loads(request.body)
+    output = drop_classify(input)
+    return JsonResponse(output)
 
 @require_http_methods(["POST"])
 @csrf_exempt
