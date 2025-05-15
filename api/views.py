@@ -72,8 +72,8 @@ def transform_view(request):
       }
     ]
     """
-    manuscripts_data = json.loads(request.body)
-    print("manuscripts_data:", manuscripts_data)
-    rdf_output = transform_data_into_rdf(manuscripts_data)
-    print("rdf_output:", rdf_output)
-    return HttpResponse(rdf_output, content_type="text/turtle")
+    input = json.loads(request.body)
+    print("manuscripts_data:", input)
+    output = transform_data_into_rdf(input)
+    print("rdf_output:", output)
+    return HttpResponse(output, content_type="text/turtle")
