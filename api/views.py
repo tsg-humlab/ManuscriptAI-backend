@@ -18,7 +18,7 @@ from api.models import Activity
 def drop_classify_view(request):
     input = json.loads(request.body)
     output = drop_classify(input)
-    Activity.objects.create(user=request.user, endpoint='send_manuscripts', input=input, output=output)
+    Activity.objects.create(user=request.user, endpoint='drop_classify', input=input, output=output)
     return JsonResponse(output)
 
 @require_http_methods(["POST"])
@@ -79,5 +79,5 @@ def transform_view(request):
     print("manuscripts_data:", input)
     output = transform_data_into_rdf(input)
     print("rdf_output:", output)
-    Activity.objects.create(user=request.user, endpoint='send_manuscripts', input=input, output=output)
+    Activity.objects.create(user=request.user, endpoint='transform', input=input, output=output)
     return HttpResponse(output, content_type="text/turtle")
