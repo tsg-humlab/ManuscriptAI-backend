@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-becpi-055eicmfy(un3v0&&zo#2djow&czkg$0w_(5hzkc^6y9
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'ruback.rich.ru.nl', 'testserver' ]
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'ruback.rich.ru.nl', 'testserver', '10.118.56.145' ]
 CSRF_TRUSTED_ORIGINS = ['http://localhost:3000', 'https://ruback.rich.ru.nl']
 
 
@@ -78,7 +78,7 @@ WSGI_APPLICATION = 'manuscriptai_ru_backend_v2.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': BASE_DIR / '../writable/database' / 'db.sqlite3',
     }
 }
 
@@ -118,6 +118,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = "/home/app/web/staticfiles"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
