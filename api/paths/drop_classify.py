@@ -355,7 +355,7 @@ def drop_classify(data):
     # 1) Split the file into chunks
     chunks = chunk_file_by_type(raw_text, extension)
 
-    # 2) Process each chunk *sequentially* (not in parallel)
+    # 2) Process each chunk sequentially
     results = []
     for chunk_text in chunks:
         conversation_result = data_drop_agent.initiate_chat(
@@ -367,18 +367,53 @@ def drop_classify(data):
         final_msg = conversation_result.chat_history[-1]["content"]
         results.append(final_msg)
 
-    # 3) Merge chunk results
-    all_manuscripts = []
+    # 3) Parse every agent reply into a flat list
+    parsed_sequence: list[dict] = []
     for structurer_json in results:
         try:
             parsed = json.loads(structurer_json)
             if isinstance(parsed, dict):
-                all_manuscripts.append(parsed)
+                parsed_sequence.append(parsed)
             elif isinstance(parsed, list):
-                all_manuscripts.extend(parsed)
+                parsed_sequence.extend(parsed)
             else:
                 print("[WARNING] Unexpected JSON shape:", type(parsed))
         except json.JSONDecodeError:
-            print("[ERROR] Could not parse the structurer JSON:\n", structurer_json)
+            print("[WARNING] Could not parse Structurer JSON:\n", structurer_json)
 
-    return {"structured_data": all_manuscripts}
+    # 4) Helper: merge source→target (skip manuscript_ID, skip empty values)
+    def merge_dicts_in_place(target: dict, source: dict) -> None:
+        for key, val_src in source.items():
+            if key == "manuscript_ID":
+                continue
+            if val_src in (None, "", [], {}):
+                continue
+
+            val_tgt = target.get(key)
+            if isinstance(val_src, dict) and isinstance(val_tgt, dict):
+                merge_dicts_in_place(val_tgt, val_src)
+            elif not val_tgt:
+                target[key] = val_src
+            elif val_tgt != val_src:
+                target[key] = f"{val_tgt} / {val_src}"
+
+    # 5) Walk parsed_sequence and merge any no-ID record into the last ID-bearing one
+    merged_manuscripts: list[dict] = []
+    last_with_id: dict | None = None
+
+    for ms in parsed_sequence:
+        has_id = bool(ms.get("manuscript_ID") and str(ms["manuscript_ID"]).strip())
+        if has_id:
+            merged_manuscripts.append(ms)
+            last_with_id = ms
+        else:
+            if last_with_id is not None:
+                merge_dicts_in_place(last_with_id, ms)
+            else:
+                # If the very first record had no ID, it just keep it “as is”
+                merged_manuscripts.append(ms)
+
+    # 6) Return the merged list
+    return {"structured_data": merged_manuscripts}
+
+
