@@ -28,14 +28,14 @@ def set_csrf_token(request):
 def login_view(request):
     try:
         data = json.loads(request.body.decode('utf-8'))
-        email = data['email']
+        username = data['username']
         password = data['password']
     except json.JSONDecodeError:
         return JsonResponse(
             {'success': False, 'message': 'Invalid JSON'}, status=400
         )
 
-    user = authenticate(request, username=email, password=password)
+    user = authenticate(request, username=username, password=password)
 
     if user:
         login(request, user)
