@@ -2,7 +2,6 @@ import json
 
 from django.http.response import JsonResponse, HttpResponse
 from django.views.decorators.http import require_http_methods
-from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
@@ -70,7 +69,6 @@ def register(request):
         return JsonResponse({'error': errors}, status=400)
 
 @require_http_methods(["POST"])
-@csrf_exempt
 @login_required
 def drop_classify_view(request):
     input = json.loads(request.body)
@@ -79,7 +77,6 @@ def drop_classify_view(request):
     return JsonResponse(output)
 
 @require_http_methods(["POST"])
-@csrf_exempt
 @login_required
 def process_view(request):
     """
@@ -106,7 +103,6 @@ def process_view(request):
 
 
 @require_http_methods(["POST"])
-@csrf_exempt
 @login_required
 def send_manuscripts_view(request):
     input = json.loads(request.body)
@@ -116,7 +112,6 @@ def send_manuscripts_view(request):
 
 
 @require_http_methods(["POST"])
-@csrf_exempt
 @login_required
 def transform_view(request):
     """
