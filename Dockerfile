@@ -57,5 +57,10 @@ RUN chmod +x  $APP_HOME/entrypoint.sh
 # copy project
 COPY . $APP_HOME
 
+# DiskCache workaround
+USER root
+RUN chown -R app:app .cache
+USER app
+
 # run entrypoint.sh
 ENTRYPOINT ["/home/app/web/entrypoint.sh"]
