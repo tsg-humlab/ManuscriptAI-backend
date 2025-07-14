@@ -48,48 +48,48 @@ structurer_agent = ConversableAgent(
     name="Structurer",
     system_message="""
 
-    You are a data structurer specializing in medieval manuscripts, manuscript cataloging, and multiple languages (including Dutch, Italian, French, and German). 
-    You will receive raw manuscript data in various file formats (CSV, Turtle, JSON, XML, TEI, text, etc.) from the DataDrop Agent.
+    You are a data structurer specializing in medieval manuscripts, manuscript cataloging, and multiple modern and ancient languages (including Latin, Dutch, Italian, French, and German). 
+    You will receive raw manuscript data in various file formats (CSV, Turtle, JSON, XML, TEI, text, etc.) from the DataDrop Agent.    
 
     Your task is to:
-
+    
     1. Extract & Identify all pertinent manuscript information from the provided data (the “data_analyzed”).
     2. Organize that information into the strict JSON schema (see below).
     3. Preserve completeness: include all relevant data; if a field is absent in the text, set it to `null`.
     4. Maintain Original Language (no translations).
+     4.a  **Verbatim transcribe**: for every extracted field, copy exactly the characters you see in the input (including accents, case, abbreviations).  
+      Do NOT translate, normalize spelling, or map to English synonyms.
     5. No Guessing: if unsure, use `null`.
-
-
+     
     ---
     ### **JSON Format** 
-
+    
     For each manuscript you identify, you MUST produce a single JSON object containing exactly these fields:
 
     {
-    "manuscript_ID": "The official shelfmark or identifier assigned by a library, archive, or collection, or null if not specified",
-    "century_of_creation": "Century (e.g., '12th century', '15th century')",
-    "support_type": "e.g. 'parchment', 'paper', 'vellum'...",
+    "manuscript_ID": "The official shelfmark or identifier assigned by a library, archive, or collection; null if not present",
+    "century_of_creation": "The exact string from the source (e.g. ‘1353; ‘14th century’, or a data range); null if not present",
+    "support_type": "The exact support description (e.g. 'parchment', 'paper', 'vellum') as in the source (verbatim, including language and spelling); null if not present",
     "dimensions_of_the_manuscript": {
         "width": "Numeric value + unit (e.g. '20 cm', '150 mm', or null if not specified)",
         "length": "Numeric value + unit (e.g. '30 cm', '200 mm', or null if not specified)",
         "thickness": "Numeric value + unit (e.g. '3 mm', '0.5 cm', or null if not specified)"
         },
-    "contained_works": "A single comma-separated string of the works found in the manuscript",
-    "incipit": "The opening words of the text, if available.",
-    "explicit": "The final words of the text, if available.",
-    "handwriting_form": "The style of handwriting/script (e.g. 'Gothic textualis', 'Caroline minuscule', etc.)",
-    "decorations": "all information regarding decorations such as 'miniatures', 'decorated initials', 'historiated initials, etc.'",
-    "binding": "Information about the type or/and material or style of the binding in the manuscript",
-    "total_folia_count": "The folio/page notation (e.g. '1r-112v', or null)",
-    "ink": "Type of ink used (e.g. 'iron gall', 'carbon black', or null if not mentioned)",
-    "format": "Type of format such as quarto, duodecimo etc., or null",
-    "authors": "A single comma-separated string of authors (e.g. 'Author1, Author2'), or null if none are identified.",
-    "copyists": "A single comma-separated string of copyists (e.g. 'Copyist1, Copyist2'), or null if none are identified.",
-    "miniaturists": "A single comma-separated string of miniaturists, or null if none.",
-    "bookbinders": "A single comma-separated string of bookbinders, or null if none.",
-    "illuminators": "A single comma-separated string of illuminators, or null if none.",
-    "rubricators": "A single comma-separated string of rubricators, or null if none.",
-    "data_analyzed": "The EXACT raw text from the DataDropAgent, no omissions or summaries",
+    "contained_works": "The exact title(s) of contained work(s) in the manuscript, comma-separated verbatim; null if none",
+    "incipit": "The full incipit text exactly as in the source (preserving line breaks and punctuation); null if not present",
+    "explicit": "The full explicit text exactly as in the source (preserving line breaks and punctuation); null if not present",
+    "handwriting_form": "The script style string exactly as given (e.g. ‘Littera gothica textualis’), or null if not specified",
+    "decorations": "The exact decoration‐related text as in the source, including any mentions of miniatures, decorated initials, historiated initials, borders, marginal illustrations, headpieces, tailpieces, frames, etc.; if multiple, concatenate verbatim separated by commas; null if none",
+    "binding": "The exact binding description string as in the source; null if not present",
+    "total_folia_count": "The sum total of leaves computed: guard leaves + numbered folios (e.g. 2 + 191 = 193), or null",
+    "ink": "The exact ink description string as in the source; null if not present",
+    "format": "Type of format such as quarto, duodecimo etc. by using the string term in the source, or null",
+    "authors": "The exact name(s) of medieval or/and ancient author(s) as reported in the source, comma-separated verbatim; null if none",
+    "copyists": "The exact name(s) of medieval copyist(s) as reported in the source, comma-separated verbatim; null if none",
+    "miniaturists": "The exact name(s) of medieval miniaturist(s) as reported in the source, comma-separated verbatim; null if none",
+    "bookbinders": "The exact name(s) of medieval bookbinder(s) as reported in the source, comma-separated verbatim; null if none",
+    "illuminators": "The exact name(s) of medieval illuminator(s) as reported in the source, comma-separated verbatim; null if none",
+    "rubricators": "The exact name(s) of medieval rubricator(s) as reported in the source, comma-separated verbatim; null if none",
     "restoration_history": "Information about the restoration process the manuscript may have gone through",
     "additional_notes": "any additional notes/texts that are about the manuscript but do not fit any of the above indicated categories",
     "ownership_history": "relevant information about who owned the manuscript and where it was and is preserved "
@@ -355,8 +355,8 @@ def drop_classify(data):
     # 1) Split the file into chunks
     chunks = chunk_file_by_type(raw_text, extension)
 
-    # 2) Process each chunk sequentially
-    results = []
+    # 2) Process each chunk sequentially, keeping both reply and chunk
+    results: list[tuple[str, str]] = []
     for chunk_text in chunks:
         conversation_result = data_drop_agent.initiate_chat(
             recipient=structurer_agent,
@@ -365,28 +365,29 @@ def drop_classify(data):
         )
         # The structurer agent's final message is the last message => must be valid JSON (object or array)
         final_msg = conversation_result.chat_history[-1]["content"]
-        results.append(final_msg)
+        results.append((final_msg, chunk_text))
 
-    # 3) Parse every agent reply into a flat list
-    parsed_sequence: list[dict] = []
-    for structurer_json in results:
+    # 3) Parse every agent reply into a flat list of (parsed_json, chunk_text)
+    parsed_sequence: list[tuple[dict, str]] = []
+    for structurer_json, chunk_text in results:
         try:
             parsed = json.loads(structurer_json)
-            if isinstance(parsed, dict):
-                parsed_sequence.append(parsed)
-            elif isinstance(parsed, list):
-                parsed_sequence.extend(parsed)
-            else:
-                print("[WARNING] Unexpected JSON shape:", type(parsed))
         except json.JSONDecodeError:
             print("[WARNING] Could not parse Structurer JSON:\n", structurer_json)
+            continue
+
+        if isinstance(parsed, dict):
+            parsed_sequence.append((parsed, chunk_text))
+        elif isinstance(parsed, list):
+            for item in parsed:
+                parsed_sequence.append((item, chunk_text))
+        else:
+            print("[WARNING] Unexpected JSON shape:", type(parsed))
 
     # 4) Helper: merge source→target (skip manuscript_ID, skip empty values)
     def merge_dicts_in_place(target: dict, source: dict) -> None:
         for key, val_src in source.items():
-            if key == "manuscript_ID":
-                continue
-            if val_src in (None, "", [], {}):
+            if key == "manuscript_ID" or val_src in (None, "", [], {}):
                 continue
 
             val_tgt = target.get(key)
@@ -397,21 +398,29 @@ def drop_classify(data):
             elif val_tgt != val_src:
                 target[key] = f"{val_tgt} / {val_src}"
 
-    # 5) Walk parsed_sequence and merge any no-ID record into the last ID-bearing one
+    # 5) Merge records, using chunk_text to build data_analyzed
     merged_manuscripts: list[dict] = []
     last_with_id: dict | None = None
 
-    for ms in parsed_sequence:
-        has_id = bool(ms.get("manuscript_ID") and str(ms["manuscript_ID"]).strip())
+    for ms_dict, chunk_text in parsed_sequence:
+        has_id = bool(ms_dict.get("manuscript_ID") and str(ms_dict["manuscript_ID"]).strip())
         if has_id:
-            merged_manuscripts.append(ms)
-            last_with_id = ms
+            #  initialize data_analyzed to this chunk
+            ms_dict["data_analyzed"] = chunk_text
+            merged_manuscripts.append(ms_dict)
+            last_with_id = ms_dict
         else:
             if last_with_id is not None:
-                merge_dicts_in_place(last_with_id, ms)
+                # Merge other fields
+                merge_dicts_in_place(last_with_id, ms_dict)
+                # Append this chunk to data_analyzed
+                existing = last_with_id.get("data_analyzed", "")
+                last_with_id["data_analyzed"] = (existing + "\n" + chunk_text).strip()
             else:
-                # If the very first record had no ID, it just keep it “as is”
-                merged_manuscripts.append(ms)
+                # No prior ID: treat this as its own record, but still record the chunk
+                ms_dict["data_analyzed"] = chunk_text
+                # Edge-case: first record has no ID
+                merged_manuscripts.append(ms_dict)
 
     # 6) Return the merged list
     return {"structured_data": merged_manuscripts}
