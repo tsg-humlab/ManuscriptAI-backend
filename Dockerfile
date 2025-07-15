@@ -58,7 +58,7 @@ RUN chmod +x  $APP_HOME/entrypoint.sh
 COPY . $APP_HOME
 
 # DiskCache workaround
-RUN mkdir .cache
+RUN mkdir -p .cache
 USER root
 RUN chown -R app:app .cache
 USER app
