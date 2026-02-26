@@ -42,8 +42,6 @@ The front-end is made with [Vue](https://vuejs.org/) and the back-end with Djang
 
 ### Test
 
- Erwin
-
 <img src="https://github.com/primer/octicons/blob/main/icons/globe-24.svg" width="20"> [test.manuscript-ai.rich.ru.nl](https://test.manuscript-ai.rich.ru.nl/)
 
 <img src="https://github.com/primer/octicons/blob/main/icons/server-24.svg" width="20"> Lightning
