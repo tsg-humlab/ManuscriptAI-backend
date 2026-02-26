@@ -27,7 +27,8 @@ Manuscript AI is a web application to enrich manuscript documents with metadata.
 The front-end is made with [Vue](https://vuejs.org/) and the back-end with Django (originally Flask). With `docker compose` (which uses `docker-compose.yml`) two containers are created: *frontend* and *backend*. The *frontend* container also contains an Nginx server as reverse proxy that redirects all request for `/api/` to the backend.
 
 > [!WARNING]
-> "Use branch 'django-backend' of the forked repo"
+> ### Use branch 'django-backend' of the forked repo
+> 
 >    We use branch `django-backend` of the TSG fork of the Editor repository to merge the changes from the upstream (=forked/original) repository and everything that is necessary to incorporate the Django backend. 
 >    
 >    To get changes from the upstream repository, go to [https://github.com/tsg-humlab/ManuscriptAI-Editor]() and click on `Sync fork`. Then do 
