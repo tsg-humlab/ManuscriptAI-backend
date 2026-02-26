@@ -16,8 +16,8 @@ Manuscript AI consists of a frontend and a backend. Two implementations of the b
 * [Giulia Biagioni](mailto:giulia.biagioni@tno.nl) - TNO
 * [Ioannis Tolios](ioannis.tolios@tno.nl) - TNO (Developer)
 * [Alex Wissink](mailto:alex.wissink@ru.nl) - RU (Research Assistent)
-* [Micha Hulsbosch] - RU (developer)
-* [Erwin Komen] - RU (developer)
+* Micha Hulsbosch - RU (developer)
+* Erwin Komen - RU (developer)
 
 
 ## Description
