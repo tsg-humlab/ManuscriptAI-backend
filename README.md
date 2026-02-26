@@ -137,7 +137,7 @@ If the SSH tunnel is established, go to [http://localhost:5001/admin](http://loc
 
 ### Live
 
-:octicons-globe-24: [manuscript-ai.rich.ru.nl](https://manuscript-ai.rich.ru.nl/)
+<img src="https://github.com/primer/octicons/blob/main/icons/globe-24.svg" width="20">  [manuscript-ai.rich.ru.nl](https://manuscript-ai.rich.ru.nl/)
 
 The ip address of the manuscriptai container on Lightning: 10.208.155.23.
 
