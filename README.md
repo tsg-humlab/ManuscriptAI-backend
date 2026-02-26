@@ -42,11 +42,13 @@ The front-end is made with [Vue](https://vuejs.org/) and the back-end with Djang
 
 ### Test
 
-:octicons-globe-24: [test.manuscript-ai.rich.ru.nl](https://test.manuscript-ai.rich.ru.nl/)
+ Erwin
 
-:material-server: Lightning
+<img src="https://github.com/primer/octicons/blob/main/icons/globe-24.svg" width="20"> [test.manuscript-ai.rich.ru.nl](https://test.manuscript-ai.rich.ru.nl/)
 
-:octicons-rel-file-path-24: `/var/www/manuscriptai-editor/repo` and `/var/www/manuscriptai-backend/repo`
+<img src="https://github.com/primer/octicons/blob/main/icons/server-24.svg" width="20"> Lightning
+
+<img src="https://github.com/primer/octicons/blob/main/icons/rel-file-path-24.svg" width="20">  `/var/www/manuscriptai-editor/repo` and `/var/www/manuscriptai-backend/repo`
 
 In the first folder, there is a symlink to the second, `backend_django -> /var/www/manuscriptai-backend/repo/`, and `docker-compose.yml` is changed to
 
