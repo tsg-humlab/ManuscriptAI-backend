@@ -89,14 +89,18 @@ def drop_classify_view(request):
     input = json.loads(request.body)
     output = drop_classify(input)
     # ===== issue #1, EK ============
+    obj = Activity.objects.create(user=request.user, endpoint='drop_classify', input=input, output=output)
+    # Determine the signature
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     oSignature = dict(method="drop_classify", activity_id=obj.id, time=timestamp)
     if output and "structured_data" in output:
         # Inject the signature into each Manuscript item
         for oItem in output.get("structured_data"):
             oItem['signature'] = oSignature
+        # Now save the Activity again, with the updated `output`
+        obj.output = output
+        obj.save()
     # ===============================
-    obj = Activity.objects.create(user=request.user, endpoint='drop_classify', input=input, output=output)
     return JsonResponse(output)
 
 @require_http_methods(["POST"])
@@ -140,6 +144,9 @@ def send_manuscripts_view(request):
     input = json.loads(request.body)
     output, status = send_manuscipts(input)
     # ===== issue #1, EK ============
+    # First record this activity, so as to get the `activity_id`
+    obj = Activity.objects.create(user=request.user, endpoint='send_manuscripts', input=input, output=output)
+    # Determine the signature
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     oSignature = dict(method="send_manuscripts", activity_id=obj.id, time=timestamp)
     # Walk the structured results list in the output
@@ -156,8 +163,10 @@ def send_manuscripts_view(request):
                     oManu[0]['signature'] = oSignature
                     # Place back
                     oOneResult[key] = json.dumps(oManu)
+        # Now save the Activity again, with the updated `output`
+        obj.output = output
+        obj.save()
     # ===============================
-    obj = Activity.objects.create(user=request.user, endpoint='send_manuscripts', input=input, output=output)
     return JsonResponse(output, status=status)
 
 
