@@ -13,6 +13,9 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 import json
 from django.contrib.auth import authenticate, login, logout
 from .forms import CreateUserForm
+# ============ issue #1, EK =====
+from datetime import datetime
+# ===============================
 
 
 @ensure_csrf_cookie
@@ -68,12 +71,45 @@ def register(request):
         errors = form.errors.as_json()
         return JsonResponse({'error': errors}, status=400)
 
+def get_signature(endpoint, activity_id):
+    """Create a dictionary with a `signature` to be added to an `Activity` output or input field"""
+
+    # Determine the signature
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    oSignature = dict(method=endpoint, activity_id=activity_id, time=timestamp)
+    # Return what we made
+    return oSignature
+
 @require_http_methods(["POST"])
 @login_required
 def drop_classify_view(request):
+    """
+    Example JSON output:
+    { "structured_data": [
+        { "manuscript_ID": "Tsg Humanities 8",
+          "century_of_creation": "12th",
+          "support_type": "parchment" },
+        { "manuscript_ID": "Tsg Humanities 9",
+          "century_of_creation": "13th",
+          "support_type": "leather"   },
+      ]
+    }
+    """    
     input = json.loads(request.body)
     output = drop_classify(input)
-    Activity.objects.create(user=request.user, endpoint='drop_classify', input=input, output=output)
+    # ===== issue #1, EK ============
+    obj = Activity.objects.create(user=request.user, endpoint='drop_classify', input=input, output=output)
+    # Get a signature
+    oSignature = get_signature("drop_classify", obj.id)
+    # Adapt the output
+    if output and "structured_data" in output:
+        # Inject the signature into each Manuscript item
+        for oItem in output.get("structured_data"):
+            oItem['signature'] = oSignature
+        # Now save the Activity again, with the updated `output`
+        obj.output = output
+        obj.save()
+    # ===============================
     return JsonResponse(output)
 
 @require_http_methods(["POST"])
@@ -105,9 +141,40 @@ def process_view(request):
 @require_http_methods(["POST"])
 @login_required
 def send_manuscripts_view(request):
+    """
+    Example JSON output:
+    { "structured_results": [
+        { "Manuscript 1": "[{\"manuscript_ID\": \"SomeId\", \"field2\": \"some value\"}]"},
+        { "Manuscript 2": "[..(stringified JSON list with 1 object)..]"},
+        { "Manuscript 3": "[..(stringified JSON list with 1 object)..]"},
+      ]
+    }
+    """
     input = json.loads(request.body)
     output, status = send_manuscipts(input)
-    Activity.objects.create(user=request.user, endpoint='send_manuscripts', input=input, output=output)
+    # ===== issue #1, EK ============
+    # First record this activity, so as to get the `activity_id`
+    obj = Activity.objects.create(user=request.user, endpoint='send_manuscripts', input=input, output=output)
+    # Get a signature
+    oSignature = get_signature("send_manuscripts", obj.id)
+    # Walk the structured results list in the output
+    if output and "structured_results" in output:
+        # Review each manuscript result
+        for idx, oOneResult in enumerate(output.get("structured_results")):
+            key = "Manuscript {}".format(idx+1)
+            sManu = oOneResult[key]
+            if sManu:
+                # Transform into object
+                oManu = json.loads(sManu)
+                # Inject signature into this manuscript item
+                if len(oManu) > 0 and "signature" in oManu[0]:
+                    oManu[0]['signature'] = oSignature
+                    # Place back
+                    oOneResult[key] = json.dumps(oManu)
+        # Now save the Activity again, with the updated `output`
+        obj.output = output
+        obj.save()
+    # ===============================
     return JsonResponse(output, status=status)
 
 
@@ -131,5 +198,18 @@ def transform_view(request):
     print("manuscripts_data:", input)
     output = transform_data_into_rdf(input)
     print("rdf_output:", output)
+    # ===== issue #1, EK ============
+    if input and isinstance(input, list):
+        # Get a signature and then adapt the `input` (!)
+        oSignature = get_signature("manual", None)
+        # We are expecting a list of JSON objects, where each object just has the field "data"
+        for oItem in input:
+            data = oItem.get("data")
+            if data:
+                # Check: do we already have a signature?
+                sig = data.get("signature")
+                if sig is None:
+                    data['signature'] = oSignature
+    # ===============================
     Activity.objects.create(user=request.user, endpoint='transform', input=input, output=output)
     return HttpResponse(output, content_type="text/turtle")
