@@ -71,6 +71,15 @@ def register(request):
         errors = form.errors.as_json()
         return JsonResponse({'error': errors}, status=400)
 
+def get_signature(endpoint, activity_id):
+    """Create a dictionary with a `signature` to be added to an `Activity` output field"""
+
+    # Determine the signature
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    oSignature = dict(method="drop_classify", activity_id=activity_id, time=timestamp)
+    # Return what we made
+    return oSignature
+
 @require_http_methods(["POST"])
 @login_required
 def drop_classify_view(request):
@@ -90,9 +99,9 @@ def drop_classify_view(request):
     output = drop_classify(input)
     # ===== issue #1, EK ============
     obj = Activity.objects.create(user=request.user, endpoint='drop_classify', input=input, output=output)
-    # Determine the signature
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    oSignature = dict(method="drop_classify", activity_id=obj.id, time=timestamp)
+    # Get a signature
+    oSignature = get_signature("drop_classify", obj.id)
+    # Adapt the output
     if output and "structured_data" in output:
         # Inject the signature into each Manuscript item
         for oItem in output.get("structured_data"):
@@ -146,9 +155,8 @@ def send_manuscripts_view(request):
     # ===== issue #1, EK ============
     # First record this activity, so as to get the `activity_id`
     obj = Activity.objects.create(user=request.user, endpoint='send_manuscripts', input=input, output=output)
-    # Determine the signature
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    oSignature = dict(method="send_manuscripts", activity_id=obj.id, time=timestamp)
+    # Get a signature
+    oSignature = get_signature("send_manuscripts", obj.id)
     # Walk the structured results list in the output
     if output and "structured_results" in output:
         # Review each manuscript result
@@ -192,9 +200,9 @@ def transform_view(request):
     print("rdf_output:", output)
     # ===== issue #1, EK ============
     if input and isinstance(input, list):
+        # Get a signature and then adapt the `input` (!)
+        oSignature = get_signature("manual", None)
         # We are expecting a list of JSON objects, where each object just has the field "data"
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        oSignature = dict(method="manual", activity_id=None, time=timestamp)
         for oItem in input:
             data = oItem.get("data")
             if data:
