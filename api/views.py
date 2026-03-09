@@ -72,7 +72,7 @@ def register(request):
         return JsonResponse({'error': errors}, status=400)
 
 def get_signature(endpoint, activity_id):
-    """Create a dictionary with a `signature` to be added to an `Activity` output field"""
+    """Create a dictionary with a `signature` to be added to an `Activity` output or input field"""
 
     # Determine the signature
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
