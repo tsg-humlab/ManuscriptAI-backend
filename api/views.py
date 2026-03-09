@@ -76,7 +76,7 @@ def get_signature(endpoint, activity_id):
 
     # Determine the signature
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    oSignature = dict(method="drop_classify", activity_id=activity_id, time=timestamp)
+    oSignature = dict(method=endpoint, activity_id=activity_id, time=timestamp)
     # Return what we made
     return oSignature
 
